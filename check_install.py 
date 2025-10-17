@@ -1,0 +1,49 @@
+#!/usr/bin/env python3
+import importlib.util
+import subprocess
+import sys
+
+def check_package(package_name):
+    try:
+        spec = importlib.util.find_spec(package_name)
+        if spec is None:
+            return False
+        return True
+    except ImportError:
+        return False
+
+print("🔍 检查安装状态...")
+
+packages = ["ollama", "chromadb", "PyPDF2"]
+all_installed = True
+
+for package in packages:
+    if check_package(package):
+        print(f"✅ {package} 已安装")
+    else:
+        print(f"❌ {package} 未安装")
+        all_installed = False
+
+# 检查Ollama服务
+try:
+    result = subprocess.run(["ollama", "list"], capture_output=True, text=True, timeout=10)
+    if result.returncode == 0:
+        print("✅ Ollama 服务运行正常")
+        # 显示已安装的模型
+        if "NAME" in result.stdout:
+            print("📚 已安装的模型:")
+            for line in result.stdout.split('\n')[1:]:
+                if line.strip():
+                    print(f"   {line}")
+    else:
+        print("❌ Ollama 服务有问题")
+        all_installed = False
+except Exception as e:
+    print(f"❌ 无法连接Ollama: {e}")
+    print("请运行: ollama serve")
+
+if all_installed:
+    print("\n🎉 所有依赖已就绪！可以运行智能体了！")
+    print("运行: python mac_agent.py")
+else:
+    print("\n💡 请安装缺失的包后重试")
